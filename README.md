@@ -1,5 +1,74 @@
 # bmad-train-1
 
+## Purpose
+
+This project is a sandbox for experimenting with and learning **BMAD v7**
+workflows, such as `bmad-build`. The code itself is deliberately small: the
+Mars Rover kata gives those workflows a concrete, well-understood target to
+plan, build, test, and review.
+
+## Mars Rover Kata
+
+A squad of rovers lands on a rectangular plateau on Mars. Each rover has a
+position (`x y`) and a heading (`N`, `E`, `S` or `W`), and is driven by a
+string of commands:
+
+- `L` turns the rover 90 degrees left, without moving.
+- `R` turns the rover 90 degrees right, without moving.
+- `M` moves the rover one cell forward in the direction it is facing.
+
+North is `+y` and east is `+x`.
+
+### Wrapping planet
+
+This implementation uses the wrapping-planet variant. The grid spans `0 0` to
+the given upper-right corner `W H`, inclusive. A rover that moves off any edge
+re-enters from the opposite edge: `x` wraps modulo `W+1` and `y` wraps modulo
+`H+1`. For example, on a `5 5` grid a rover at `5 2 E` that moves ends at
+`0 2 E`. There are no obstacles and no collision detection between rovers.
+
+### Input and output
+
+The first input line is the grid's upper-right corner. Then each rover takes
+two lines: its start position and heading, then its command string (which may
+be empty). Rovers run one after another, and the program prints each rover's
+final position on its own line.
+
+Input:
+
+```text
+5 5
+1 2 N
+LMLMLMLMM
+3 3 E
+MMRMMRMRRM
+```
+
+Output:
+
+```text
+1 3 N
+5 1 E
+```
+
+Invalid input, such as an unknown command, a bad heading, a malformed line, or
+a rover that starts outside the grid, makes the program print an error to
+stderr and exit with status 1.
+
+### Run and test
+
+Pipe the input to the console script on stdin:
+
+```bash
+printf '5 5\n1 2 N\nLMLMLMLMM\n3 3 E\nMMRMMRMRRM\n' | uv run bmad-train-1
+```
+
+Run the test suite:
+
+```bash
+uv run pytest -q
+```
+
 ## BMAD Update
 
 This project runs the **BMAD v7 preview alpha** (BMAD-METHOD `main`) with
