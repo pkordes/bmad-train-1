@@ -33,7 +33,7 @@ def parse_rover(line: str) -> Rover:
 
 
 def parse(text: str) -> tuple[Grid, list[Mission]]:
-    lines = [line.strip() for line in text.splitlines()]
+    lines = [line.strip() for line in text.removeprefix("\ufeff").splitlines()]
     if not lines or not lines[0]:
         raise ValueError("Missing grid line: expected 'W H' as the first line")
     grid = parse_grid(lines[0])

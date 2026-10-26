@@ -35,18 +35,24 @@ def test_execute_does_not_mutate_input() -> None:
 
 
 def test_unknown_command_names_the_command() -> None:
-    with pytest.raises(ValueError, match="'X'"):
+    with pytest.raises(
+        ValueError, match="Unknown command 'X' at character 2: expected L, R or M"
+    ):
         execute(rover(0, 0, "N"), "MX", GRID)
 
 
 def test_bad_heading() -> None:
-    with pytest.raises(ValueError, match="'Q'"):
+    with pytest.raises(
+        ValueError, match="Invalid heading 'Q': expected one of N, E, S, W"
+    ):
         Heading.from_char("Q")
 
 
 @pytest.mark.parametrize(("x", "y"), [(6, 0), (0, 6), (-1, 0), (0, -1)])
 def test_start_outside_grid(x: int, y: int) -> None:
-    with pytest.raises(ValueError, match="outside"):
+    with pytest.raises(
+        ValueError, match=f"Rover start {x} {y} is outside the grid 0 0 to 5 5"
+    ):
         execute(rover(x, y, "N"), "", GRID)
 
 
@@ -56,7 +62,7 @@ def test_single_cell_grid_wraps_onto_itself() -> None:
 
 @pytest.mark.parametrize(("width", "height"), [(-1, 5), (5, -1)])
 def test_grid_rejects_negative_corner(width: int, height: int) -> None:
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Invalid grid corner"):
         Grid(width, height)
 
 

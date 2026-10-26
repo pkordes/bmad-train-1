@@ -106,7 +106,7 @@ def execute(rover: Rover, commands: str, grid: Grid) -> Rover:
                 rover = rover.move(grid)
             case _:
                 raise ValueError(
-                    f"Unknown command {command!r} at position {index}: "
+                    f"Unknown command {command!r} at character {index + 1}: "
                     "expected L, R or M"
                 )
     return rover

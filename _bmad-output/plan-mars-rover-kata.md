@@ -99,7 +99,7 @@ context: []
 
 ### 2026-10-26
 
-**Code review complete.** 1 `decision-needed` (resolved → patch), 8 `patch`, 0 `defer`, 18 rejected. (PR #1, `main...3f50dcf`; lenses: blind-hunter, edge-case-hunter, verification-gap, intent-alignment.)
+**Code review complete.** 8 `patch` (1 of them a resolved `decision-needed`), 0 `defer`, 18 rejected. (PR #1, `main...3f50dcf`; lenses: blind-hunter, edge-case-hunter, verification-gap, intent-alignment.)
 
 - [x] [Review][Patch] Console script not exercised as a process — add a subprocess test of the installed `bmad-train-1` script (decision resolved: option a) [tests/test_cli.py]
 - [x] [Review][Patch] Blank-line tolerance in `parse()` is untested — add a blank-lines-between-rovers test [tests/test_parser.py:30]
@@ -130,3 +130,56 @@ context: []
 - false · diff touches pyproject/uv.lock/_bmad-output — covered by the plan's Tasks.
 - false · wrapping variant/start-outside error absent from intent text — specified in the plan's frozen Boundaries; fix would edit intent.
 - maybe-false · zero-rover input exits 0 with empty output — at most low; settled by deciding whether zero rovers is valid input.
+
+### 2026-10-26 (re-review)
+
+**Code review complete.** 0 `decision-needed`, 8 `patch`, 0 `defer`, 10 rejected. (PR #1, `main...c8e8ee9`; same four lenses.)
+
+- [x] [Review][Patch] All-or-nothing output not pinned at the CLI; the run-level test name overclaims (the previous round's F7 fix was incomplete) [tests/test_cli.py, tests/test_parser.py:39]
+- [x] [Review][Patch] Subprocess tests' script lookup breaks on Windows (`.exe`); outside the venv it now fails with a clear message (intended, not skipped) [tests/test_cli.py:38]
+- [x] [Review][Patch] Wrapping and grid orientation never exercised through `run()`; every parsed grid in tests is square [tests/test_parser.py]
+- [x] [Review][Patch] Blank command line followed by another rover untested [tests/test_parser.py:34]
+- [x] [Review][Patch] UTF-8 BOM on stdin rejected as a malformed grid line [src/bmad_train_1/parser.py:36]
+- [x] [Review][Patch] Error tests match broad keywords across distinct messages [tests/test_parser.py:38-55, tests/test_rover.py]
+- [x] [Review][Patch] README omits prerequisites (uv, Python ≥3.13) [README.md]
+- [x] [Review][Patch] Previous round's tally wording reads as 9 items for 8 [_bmad-output/plan-mars-rover-kata.md:102]
+
+**Rejected**
+
+- maybe-false · zero-rover input exits 0 with empty output — still a spec question; at most low.
+- false · plan frontmatter/change log not updated — review must not change `status`; the other fields belong to bmad-build.
+- false · walkthrough stale vs later commits — point-in-time record of 61d6867.
+- low · README error contract omits the `error: ` prefix and some cases — the list is examples ("such as"); rarely visible.
+- low · missing command line gives a misleading error — detection needs a heuristic (as previous round).
+- low · plan "no off-plateau errors" vs start-outside error — the fix edits the frozen intent section.
+- false · variant chosen in the plan, not the intent — specified in the frozen Boundaries.
+- false · subprocess test uses the venv script, not `uv run` — `uv run` executes that same script.
+- false · no test reads the README sample — the sample matches the CLI test's assertions.
+- false · TDD order not observable — process observation.
+
+### 2026-10-26 (third review, working tree incl. uncommitted re-review fixes)
+
+**Code review complete.** 0 `decision-needed`, 5 `patch`, 0 `defer`, 18 rejected. All low; verification-gap found no gaps.
+
+- [x] [Review][Patch] Error tests still assert fragments (`'Q'`, `outside`, `'X'`); the command index is never pinned [tests/test_parser.py:74-76, tests/test_rover.py:38-49, tests/test_cli.py:47]
+- [x] [Review][Patch] Unknown-command error says "at position N" (0-based, clashes with grid position) [src/bmad_train_1/rover.py:109]
+- [x] [Review][Patch] Subprocess tests lack a timeout [tests/test_cli.py:58,72]
+- [x] [Review][Patch] Re-review item overclaims "outside the venv" was fixed [_bmad-output/plan-mars-rover-kata.md:139]
+- [x] [Review][Patch] Re-review rejection labelled `rejected` instead of a verdict [_bmad-output/plan-mars-rover-kata.md:154]
+
+**Rejected**
+
+- low · BOM still fails when stdin isn't decoded as UTF-8 (Windows non-UTF-8 mode) — rarely visible; needs reworking stdin decoding and the test seam (3 raw findings).
+- low · leading blank line rejected — as rounds 1–2.
+- false · script lookup hard-fails outside the venv — intended: a skip would hide a broken console-script install (2 raw findings).
+- false · variant/edge rules from the plan, not the intent — frozen Boundaries.
+- false · CLI tests don't cover wrapping etc. — `main()` only passes `run()` output through, and `run()` covers them.
+- false · README not tied to the program by a test — as round 2.
+- false · test-first not visible — process observation.
+- false · workflow artifacts unchecked — point-in-time records.
+- false · behaviors beyond the intent — come from the plan and the review rounds.
+- false · two modules vs "a module" — named in the plan's Tasks.
+- low · `W`/`H` placeholders double as West/heading — standard kata notation; churn across many files.
+- false · immutability test cannot fail — it fails if `frozen=True` is dropped and `execute` mutates.
+- maybe-false · zero-rover input untested — still a spec question, at most low.
+- low · README validity list omits grid-line rules — examples list; "malformed line" covers it.

@@ -62,6 +62,9 @@ even the positions of rovers that ran before the failing one.
 
 ### Run and test
 
+You need [uv](https://docs.astral.sh/uv/). The project requires Python 3.13 or
+newer; `uv run` installs it if needed and creates the virtualenv on first use.
+
 Pipe the input to the console script on stdin:
 
 ```bash
