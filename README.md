@@ -34,6 +34,10 @@ two lines: its start position and heading, then its command string (which may
 be empty). Rovers run one after another, and the program prints each rover's
 final position on its own line.
 
+Blank lines between rovers are ignored. The line right after a rover's start
+line is always that rover's command string, so a blank line there means the
+rover has no commands.
+
 Input:
 
 ```text
@@ -53,7 +57,8 @@ Output:
 
 Invalid input, such as an unknown command, a bad heading, a malformed line, or
 a rover that starts outside the grid, makes the program print an error to
-stderr and exit with status 1.
+stderr and exit with status 1. Nothing is printed to stdout in that case, not
+even the positions of rovers that ran before the failing one.
 
 ### Run and test
 

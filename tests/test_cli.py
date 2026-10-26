@@ -1,4 +1,7 @@
 import io
+import subprocess
+import sys
+from pathlib import Path
 
 import pytest
 
@@ -27,3 +30,27 @@ def test_main_reports_malformed_input_on_stderr(
     captured = capsys.readouterr()
     assert captured.out == ""
     assert captured.err == "error: Malformed grid line '5': expected 'W H'\n"
+
+
+def test_console_script_runs_as_a_process() -> None:
+    script = Path(sys.executable).with_name("bmad-train-1")
+    result = subprocess.run(
+        [script],
+        input="5 5\n1 2 N\nLMLMLMLMM\n3 3 E\nMMRMMRMRRM\n",
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 0
+    assert result.stdout == "1 3 N\n5 1 E\n"
+    assert result.stderr == ""
+
+
+def test_console_script_reports_malformed_input_as_a_process() -> None:
+    script = Path(sys.executable).with_name("bmad-train-1")
+    result = subprocess.run(
+        [script], input="5\n", capture_output=True, text=True, check=False
+    )
+    assert result.returncode == 1
+    assert result.stdout == ""
+    assert result.stderr == "error: Malformed grid line '5': expected 'W H'\n"

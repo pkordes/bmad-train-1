@@ -42,6 +42,6 @@ Session: unavailable · Timestamp: 2026-10-26T16:18:00-04:00
 
 Session: unavailable · Timestamp: 2026-10-26T16:22:00-04:00
 
-- Action: User said "finish all blocks"; blocks 5–8 summarized in one pass, no moves (Thoughts/Test/Drive) taken.
+- Action: User said "finish all blocks"; blocks 4–8 summarized in one pass, no moves (Thoughts/Test/Drive) taken.
 - Result: Blocks 4–8 done, no changes. No new findings raised; plan triage findings #3–#5 (rejected) were surfaced but not re-litigated.
 - Open: Wrap-up follow-through pending user choice; review files still uncommitted.

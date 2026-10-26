@@ -44,9 +44,14 @@ def test_bad_heading() -> None:
         Heading.from_char("Q")
 
 
-def test_start_outside_grid() -> None:
+@pytest.mark.parametrize(("x", "y"), [(6, 0), (0, 6), (-1, 0), (0, -1)])
+def test_start_outside_grid(x: int, y: int) -> None:
     with pytest.raises(ValueError, match="outside"):
-        execute(rover(6, 0, "N"), "", GRID)
+        execute(rover(x, y, "N"), "", GRID)
+
+
+def test_single_cell_grid_wraps_onto_itself() -> None:
+    assert execute(rover(0, 0, "N"), "MMRM", Grid(0, 0)) == rover(0, 0, "E")
 
 
 @pytest.mark.parametrize(("width", "height"), [(-1, 5), (5, -1)])

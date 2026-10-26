@@ -31,6 +31,16 @@ def test_run_tolerates_crlf_and_extra_whitespace() -> None:
     assert run("5 5\r\n 1 2 N \r\nLMLMLMLMM\r\n") == ["1 3 N"]
 
 
+def test_run_tolerates_blank_lines_between_rovers() -> None:
+    text = "5 5\n1 2 N\nLMLMLMLMM\n\n3 3 E\nMMRMMRMRRM\n\n"
+    assert run(text) == ["1 3 N", "5 1 E"]
+
+
+def test_run_later_rover_failure_discards_earlier_results() -> None:
+    with pytest.raises(ValueError, match="'X'"):
+        run("5 5\n1 2 N\nLMLMLMLMM\n3 3 E\nMX\n")
+
+
 def test_format_rover() -> None:
     assert format_rover(Rover(Position(4, 0), Heading.W)) == "4 0 W"
 

@@ -94,3 +94,39 @@ context: []
 - `uv run pytest -q` -- expected: all tests pass
 - `printf '5 5\n1 2 N\nLMLMLMLMM\n3 3 E\nMMRMMRMRRM\n' | uv run bmad-train-1` -- expected: `1 3 N` / `5 1 E`
 
+
+## Code Review
+
+### 2026-10-26
+
+**Code review complete.** 1 `decision-needed` (resolved → patch), 8 `patch`, 0 `defer`, 18 rejected. (PR #1, `main...3f50dcf`; lenses: blind-hunter, edge-case-hunter, verification-gap, intent-alignment.)
+
+- [x] [Review][Patch] Console script not exercised as a process — add a subprocess test of the installed `bmad-train-1` script (decision resolved: option a) [tests/test_cli.py]
+- [x] [Review][Patch] Blank-line tolerance in `parse()` is untested — add a blank-lines-between-rovers test [tests/test_parser.py:30]
+- [x] [Review][Patch] Start-inside-grid check pinned only for x > max_x — parametrize over (6,0), (0,6), (-1,0), (0,-1) [tests/test_rover.py:47]
+- [x] [Review][Patch] README doesn't document blank-line rules (blank lines between rovers ignored; the line after a start line is always its command string) [README.md]
+- [x] [Review][Patch] README omits that any failing rover suppresses all stdout output [README.md]
+- [x] [Review][Patch] Degenerate `0 0` grid untested [tests/test_rover.py:27]
+- [x] [Review][Patch] "Later rover fails → no output" decision unpinned by tests [tests/test_parser.py:53]
+- [x] [Review][Patch] Walkthrough log entry 6 says "Blocks 4–8" but "blocks 5–8 summarized" [_bmad-output/walkthrough-mars-rover-kata/walkthrough-mars-rover-kata-log.md:45]
+
+**Rejected**
+
+- low · `int()` accepts `1_0`, `+1`, Unicode digits — rarely visible; guard adds complexity (as plan triage #3).
+- low · leading blank line rejected — input is off-spec, error is clear.
+- low · `splitlines()` splits on form feed/other control chars — never in kata input; yields an error, not a wrong result.
+- low · missing command line swallows next rover line — errors out; detection needs a heuristic.
+- low · later rover failure discards earlier results — matches AC; same as plan triage #4.
+- low · BrokenPipeError traceback when piped to `head` — only with huge output; extra guard.
+- low · OSError/KeyboardInterrupt print tracebacks — standard Python behavior; UnicodeDecodeError is already caught as ValueError.
+- low · errors lack line number/rover index — offending text is quoted; threading line numbers adds complexity.
+- false · case-sensitive commands/headings, no spaces — the plan specifies exactly N/E/S/W and L/R/M.
+- low · no `--help`, TTY hint or `__main__.py` — outside the plan's stdin-only entry point.
+- false · plan file "stale" — the Code Map records the baseline by design; both patch items were applied; triage #2 rationale was true when written.
+- low · walkthrough links use line numbers that may drift — point-in-time snapshot; they resolve today.
+- low · no lint/type-check/CI tooling — out of scope; adding tooling is not a correction.
+- low · rover.py nits (`_rotate` list rebuild, contains/wrap arg shapes, docstrings) — cosmetic churn.
+- false · TDD order not visible in history — process observation, nothing to change in the diff.
+- false · diff touches pyproject/uv.lock/_bmad-output — covered by the plan's Tasks.
+- false · wrapping variant/start-outside error absent from intent text — specified in the plan's frozen Boundaries; fix would edit intent.
+- maybe-false · zero-rover input exits 0 with empty output — at most low; settled by deciding whether zero rovers is valid input.
