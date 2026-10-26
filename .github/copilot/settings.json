@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "hooks": {
+    "agentStop": [
+      {
+        "type": "command",
+        "command": "/Users/pkordes/.local/bin/bmad-loop relay Stop",
+        "timeoutSec": 60
+      }
+    ],
+    "sessionStart": [
+      {
+        "type": "command",
+        "command": "/Users/pkordes/.local/bin/bmad-loop relay SessionStart",
+        "timeoutSec": 60
+      }
+    ],
+    "sessionEnd": [
+      {
+        "type": "command",
+        "command": "/Users/pkordes/.local/bin/bmad-loop relay SessionEnd",
+        "timeoutSec": 60
+      }
+    ]
+  }
+}
