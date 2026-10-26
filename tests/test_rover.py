@@ -62,7 +62,10 @@ def test_single_cell_grid_wraps_onto_itself() -> None:
 
 @pytest.mark.parametrize(("width", "height"), [(-1, 5), (5, -1)])
 def test_grid_rejects_negative_corner(width: int, height: int) -> None:
-    with pytest.raises(ValueError, match="Invalid grid corner"):
+    with pytest.raises(
+        ValueError,
+        match=f"Invalid grid corner {width} {height}: coordinates must be non-negative",
+    ):
         Grid(width, height)
 
 

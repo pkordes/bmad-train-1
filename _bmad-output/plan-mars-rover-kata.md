@@ -157,7 +157,7 @@ context: []
 - false · no test reads the README sample — the sample matches the CLI test's assertions.
 - false · TDD order not observable — process observation.
 
-### 2026-10-26 (third review, working tree incl. uncommitted re-review fixes)
+### 2026-10-26 (third review, working tree incl. uncommitted re-review fixes; committed as 383ee80)
 
 **Code review complete.** 0 `decision-needed`, 5 `patch`, 0 `defer`, 18 rejected. All low; verification-gap found no gaps.
 
@@ -169,7 +169,7 @@ context: []
 
 **Rejected**
 
-- low · BOM still fails when stdin isn't decoded as UTF-8 (Windows non-UTF-8 mode) — rarely visible; needs reworking stdin decoding and the test seam (3 raw findings).
+- low · BOM still fails when stdin isn't decoded as UTF-8 (Windows non-UTF-8 mode) — rarely visible; needs reworking stdin decoding and the test seam (4 raw findings).
 - low · leading blank line rejected — as rounds 1–2.
 - false · script lookup hard-fails outside the venv — intended: a skip would hide a broken console-script install (2 raw findings).
 - false · variant/edge rules from the plan, not the intent — frozen Boundaries.
@@ -183,3 +183,20 @@ context: []
 - false · immutability test cannot fail — it fails if `frozen=True` is dropped and `execute` mutates.
 - maybe-false · zero-rover input untested — still a spec question, at most low.
 - low · README validity list omits grid-line rules — examples list; "malformed line" covers it.
+
+### 2026-10-26 (fourth review, `main...383ee80`)
+
+**Code review complete.** 0 `decision-needed`, 4 `patch` (1 medium, 3 low), 0 `defer`, 18 rejected (raw findings; every rejection repeats an earlier round's decision except the two noted).
+
+- [x] [Review][Patch] Whitespace stripping in `parse()` unpinned: no padded command line, no whitespace-only separator [tests/test_parser.py:30]
+- [x] [Review][Patch] Remaining prefix-only error assertions ("Missing grid line", "Invalid grid corner") [tests/test_parser.py, tests/test_rover.py:52]
+- [x] [Review][Patch] Rover line with too many tokens untested [tests/test_parser.py]
+- [x] [Review][Patch] Third-review record: BOM annotation says 3 raw findings (4), heading lacks revision [_bmad-output/plan-mars-rover-kata.md]
+
+**Rejected**
+
+- low/maybe-false · 7 edge-case repeats (leading blank, missing command line, `int()` forms, control chars, BOM on non-UTF-8 stdin, zero rovers, BrokenPipe) — same decisions as rounds 1–3.
+- false · UnicodeDecodeError path untested — new. Stdin uses surrogateescape, so undecodable bytes yield a clean `error:` and exit 1. (This corrects round 1's rationale.)
+- low · `run()` belongs in another module — new. A design preference; moving it is churn.
+- low · test IDs, README wording for first-line/EOF rules, duplicated classic sample — cosmetic or already covered.
+- false · walkthrough stale, plan frontmatter, variant/TDD/module-shape/`uv run` divergences — as rounds 1–3.
