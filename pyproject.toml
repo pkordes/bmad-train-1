@@ -1,7 +1,7 @@
 [project]
 name = "bmad-train-1"
 version = "0.1.0"
-description = "Add your description here"
+description = "A sandbox for learning BMAD v7 workflows, using the Mars Rover kata (wrapping-planet variant) as the practice target"
 readme = "README.md"
 authors = [
     { name = "Paul Kordes", email = "paul.kordes@gmail.com" }
@@ -15,3 +15,11 @@ bmad-train-1 = "bmad_train_1:main"
 [build-system]
 requires = ["uv_build>=0.12.3,<0.13.0"]
 build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
