@@ -89,13 +89,18 @@ class Rover:
         return replace(self, position=target)
 
 
-def execute(rover: Rover, commands: str, grid: Grid) -> Rover:
-    """Run ``commands`` (``L``/``R``/``M``) and return the rover's final state."""
+def trace(rover: Rover, commands: str, grid: Grid) -> list[Rover]:
+    """Return the start state followed by the state after each command.
+
+    The whole command string is validated before anything is returned, so an
+    invalid string yields an error rather than a partial trace.
+    """
     if not grid.contains(rover.position):
         raise ValueError(
             f"Rover start {rover.position.x} {rover.position.y} is outside "
             f"the grid 0 0 to {grid.max_x} {grid.max_y}"
         )
+    states = [rover]
     for index, command in enumerate(commands):
         match command:
             case "L":
@@ -109,4 +114,10 @@ def execute(rover: Rover, commands: str, grid: Grid) -> Rover:
                     f"Unknown command {command!r} at character {index + 1}: "
                     "expected L, R or M"
                 )
-    return rover
+        states.append(rover)
+    return states
+
+
+def execute(rover: Rover, commands: str, grid: Grid) -> Rover:
+    """Run ``commands`` (``L``/``R``/``M``) and return the rover's final state."""
+    return trace(rover, commands, grid)[-1]

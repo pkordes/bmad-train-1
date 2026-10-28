@@ -1,6 +1,6 @@
 import pytest
 
-from bmad_train_1.rover import Grid, Heading, Position, Rover, execute
+from bmad_train_1.rover import Grid, Heading, Position, Rover, execute, trace
 
 GRID = Grid(5, 5)
 
@@ -77,3 +77,34 @@ def test_rotation(heading: str, left: str, right: str) -> None:
     h = Heading.from_char(heading)
     assert h.left() is Heading.from_char(left)
     assert h.right() is Heading.from_char(right)
+
+
+def test_trace_returns_start_and_each_command_state() -> None:
+    assert trace(rover(1, 2, "N"), "LMR", GRID) == [
+        rover(1, 2, "N"),
+        rover(1, 2, "W"),
+        rover(0, 2, "W"),
+        rover(0, 2, "N"),
+    ]
+
+
+def test_trace_of_empty_commands_is_just_the_start() -> None:
+    assert trace(rover(2, 2, "S"), "", GRID) == [rover(2, 2, "S")]
+
+
+def test_trace_wraps() -> None:
+    assert trace(rover(5, 2, "E"), "M", GRID)[-1] == rover(0, 2, "E")
+
+
+def test_trace_unknown_command_matches_execute() -> None:
+    with pytest.raises(
+        ValueError, match="Unknown command 'X' at character 2: expected L, R or M"
+    ):
+        trace(rover(0, 0, "N"), "MX", GRID)
+
+
+def test_trace_start_outside_grid_matches_execute() -> None:
+    with pytest.raises(
+        ValueError, match="Rover start 6 0 is outside the grid 0 0 to 5 5"
+    ):
+        trace(rover(6, 0, "N"), "", GRID)

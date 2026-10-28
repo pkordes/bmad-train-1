@@ -4,7 +4,12 @@ from bmad_train_1.parser import run
 
 
 def main() -> None:
-    """Read kata input from stdin and print one final position per rover."""
+    """Start the live map on a terminal; otherwise run the batch kata on stdin."""
+    if sys.stdin.isatty():
+        from bmad_train_1.interactive import run_interactive
+
+        run_interactive()
+        return
     try:
         results = run(sys.stdin.read())
     except ValueError as error:
