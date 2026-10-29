@@ -45,7 +45,11 @@ def run(
     size: os.terminal_size = TERMINAL,
 ) -> str:
     out = io.StringIO()
-    run_interactive(input_fn, out, delay, sleep, lambda: size)
+    def prompted(prompt: str) -> str:
+        out.write(prompt)  # input() echoes its prompt to stdout
+        return input_fn()
+
+    run_interactive(prompted, out, delay, sleep, lambda: size)
     return out.getvalue()
 
 

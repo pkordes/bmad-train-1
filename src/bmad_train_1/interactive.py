@@ -17,8 +17,10 @@ from bmad_train_1.parser import parse_grid, parse_rover
 from bmad_train_1.rover import Grid, Heading, Rover, trace
 
 CLEAR = "\x1b[H\x1b[2J"
+ALT_SCREEN_ON = "\x1b[?1049h"  # full-screen buffer, as vim/less use
+ALT_SCREEN_OFF = "\x1b[?1049l"
 PROMPT = "> "
-GRID_PROMPT = "Grid size (W H): "
+GRID_PROMPT = "Enter the grid size as W H (for example 5 5):\n" + PROMPT
 GLYPHS = {Heading.N: "^", Heading.E: ">", Heading.S: "v", Heading.W: "<"}
 HELP = (
     "Commands: add x y H [COMMANDS] | <n> COMMANDS | help | quit/exit "
@@ -126,8 +128,18 @@ class Session:
         return Outcome(frames=frames, message=describe(number, states[-1]))
 
 
+def read_line(prompt: str) -> str:
+    """Write the prompt ourselves and read stdin directly, bypassing input()."""
+    sys.stdout.write(prompt)
+    sys.stdout.flush()
+    line = sys.stdin.readline()
+    if not line:
+        raise EOFError
+    return line.rstrip("\r\n")
+
+
 def run_interactive(
-    input_fn: Callable[[], str] = input,
+    input_fn: Callable[[str], str] = read_line,
     out: TextIO = sys.stdout,
     delay: float = 0.3,
     sleep: Callable[[float], None] = time.sleep,
@@ -135,19 +147,16 @@ def run_interactive(
 ) -> None:
     """Run the live session until quit/exit, EOF or Ctrl-C."""
 
-    def draw(body: str, message: str, prompt: str | None) -> None:
-        screen = CLEAR + (body + "\n" if body else "") + message + "\n"
-        if prompt is not None:
-            screen += prompt
-        out.write(screen)
+    def draw(body: str, message: str) -> None:
+        out.write(CLEAR + (body + "\n" if body else "") + message + "\n")
         out.flush()
 
     try:
         message = "Welcome to the Mars Rover live map."
         while True:
-            draw("", message, GRID_PROMPT)
+            draw("", message)
             try:
-                grid = parse_grid(input_fn())
+                grid = parse_grid(input_fn(GRID_PROMPT))
                 check_fits(grid, terminal_size())
                 break
             except ValueError as error:
@@ -156,14 +165,14 @@ def run_interactive(
         session = Session(grid)
         message = "Type 'help' for commands."
         while True:
-            draw(render_map(grid, session.rovers), message, PROMPT)
-            outcome = session.handle(input_fn())
+            draw(render_map(grid, session.rovers), message)
+            outcome = session.handle(input_fn(PROMPT))
             if outcome.done:
                 return
             for index, frame in enumerate(outcome.frames):
                 if index:
                     sleep(delay)
-                draw(render_map(grid, frame), "", None)
+                draw(render_map(grid, frame), "")
             message = outcome.message
     except (EOFError, KeyboardInterrupt):
         out.write("\n")
