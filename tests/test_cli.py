@@ -49,6 +49,44 @@ def test_main_prints_nothing_when_a_later_rover_fails(
     )
 
 
+class _TerminalStdin(io.StringIO):
+    def isatty(self) -> bool:
+        return True
+
+    def read(self, size: int | None = -1) -> str:
+        raise AssertionError("batch mode must not read a terminal")
+
+
+def test_main_runs_live_map_in_alternate_screen_on_a_terminal(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    from bmad_train_1 import interactive
+
+    calls: list[str] = []
+    monkeypatch.setattr("sys.stdin", _TerminalStdin())
+    monkeypatch.setattr(interactive, "run_interactive", lambda: calls.append("run"))
+    main()  # returns normally, so the process exits with status 0
+    assert calls == ["run"]
+    assert capsys.readouterr().out == (
+        interactive.ALT_SCREEN_ON + interactive.ALT_SCREEN_OFF
+    )
+
+
+def test_main_restores_screen_when_live_map_fails(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    from bmad_train_1 import interactive
+
+    def fail() -> None:
+        raise RuntimeError("boom")
+
+    monkeypatch.setattr("sys.stdin", _TerminalStdin())
+    monkeypatch.setattr(interactive, "run_interactive", fail)
+    with pytest.raises(RuntimeError):
+        main()
+    assert capsys.readouterr().out.endswith(interactive.ALT_SCREEN_OFF)
+
+
 def _console_script() -> str:
     script = shutil.which("bmad-train-1", path=str(Path(sys.executable).parent))
     assert script is not None, "bmad-train-1 is not installed next to the interpreter"

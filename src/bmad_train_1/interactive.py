@@ -94,15 +94,15 @@ class Session:
                 return Outcome(message=HELP)
             case "add":
                 return self._add(rest.split())
-        if keyword.isdigit():
+        if keyword.isdecimal():
             return self._command(int(keyword), rest.split())
         raise ValueError(f"Unknown input {line!r}; type 'help' for commands")
 
     def _add(self, args: list[str]) -> Outcome:
         if len(args) not in (3, 4):
             raise ValueError("Usage: add x y H [COMMANDS]")
-        start = parse_rover(" ".join(args[:3]))
-        commands = args[3] if len(args) == 4 else ""
+        start = parse_rover(" ".join(args[:2] + [args[2].upper()]))
+        commands = args[3].upper() if len(args) == 4 else ""
         states = trace(start, commands, self.grid)  # validates before any change
         self.rovers.append(start)
         number = len(self.rovers)
@@ -115,7 +115,7 @@ class Session:
             raise ValueError(f"No Rover{number}")
         if len(args) > 1:
             raise ValueError("Usage: <n> COMMANDS")
-        commands = args[0] if args else ""
+        commands = args[0].upper() if args else ""
         states = trace(self.rovers[number - 1], commands, self.grid)
         return self._animate(number, states)
 
@@ -156,7 +156,10 @@ def run_interactive(
         while True:
             draw("", message)
             try:
-                grid = parse_grid(input_fn(GRID_PROMPT))
+                line = input_fn(GRID_PROMPT)
+                if line.strip().lower() in ("quit", "exit"):
+                    return
+                grid = parse_grid(line)
                 check_fits(grid, terminal_size())
                 break
             except ValueError as error:

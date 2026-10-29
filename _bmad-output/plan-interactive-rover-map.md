@@ -8,14 +8,21 @@ baseline_revision: '5f813f0a0d5396894a7d5053bafe43f836e46156'
 route: 'full'
 route_source: 'auto'
 risk: 'low'
-review: 'quick'
+review: 'thorough'
 review_source: 'pinned'
-lenses_ran: ['quick']
+lenses_ran: ['blind-hunter', 'edge-case-hunter', 'verification-gap', 'intent-alignment']
 review_loop_iteration: 0
-followup_review_recommended: true
+followup_review_recommended: false
 context: []
 warnings: []
-deferred: []
+deferred:
+  - summary: >-
+      AGENTS.md still describes three layers and a main() that always exits 1 on errors; it omits interactive.py, trace() and TTY dispatch.
+    evidence: |-
+      AGENTS.md "Architecture" lists rover.py, parser.py and __init__.py only, and says main() prints errors to stderr and exits 1, which now holds only in batch mode. The fix edits an agent-context file, so it is deferred rather than patched.
+    location: >-
+      AGENTS.md
+    severity: medium
 ---
 
 <intent-contract>
@@ -90,6 +97,44 @@ deferred: []
   - `[low]` `[patch]` Quit/EOF/Ctrl-C tests assert nothing beyond not raising — they now assert screen count, final prompt and trailing newline.
   - `[false]` `[reject]` README "0.3 s delay" wording incomplete — the reviewer confirms the statement is accurate; nothing in it is wrong.
 
+### 2026-10-29 — Review pass (follow-up, thorough)
+- verdicts: 34 findings — high 0, medium 9, low 16, false 9, maybe-false 0
+- findings:
+  - `[medium]` `[patch]` (intent-alignment) TTY dispatch in `main()` (alt-screen try/finally, early return) has no test — grouped with the verification-gap `main()` finding; added `test_main_runs_live_map_in_alternate_screen_on_a_terminal` and `test_main_restores_screen_when_live_map_fails` in `tests/test_cli.py`.
+  - `[medium]` `[patch]` (intent-alignment) Exit status 0 not checked at the process level — same root cause as the untested TTY branch; the new CLI test asserts `main()` returns normally on a terminal (no `SystemExit`), so the script exits 0.
+  - `[medium]` `[patch]` (intent-alignment) Real input path `read_line` never exercised — grouped with the verification-gap `read_line` finding; tests added (see that row).
+  - `[false]` `[reject]` (intent-alignment) Ctrl-C during a real blocking read is only simulated — a SIGINT during `sys.stdin.readline()` raises `KeyboardInterrupt` in the main thread, which `run_interactive` catches; confirmed by the pty smoke run exiting 0.
+  - `[false]` `[reject]` (intent-alignment) Frame flushing between animation frames is assumed — `draw` calls `out.flush()` after every frame, before `sleep`; nothing is buffered across the delay.
+  - `[false]` `[reject]` (intent-alignment) Terminal-fit check rejects valid grids beyond the intent — a map that doesn't fit cannot stay fixed on screen as the intent requires; `5 5` fits any terminal of 15×10 or more.
+  - `[false]` `[reject]` (intent-alignment) Tests pin N+1 screens rather than N — the extra screen is the undelayed start placement; there is still exactly one delayed redraw per command, matching the intent and the AC.
+  - `[low]` `[reject]` (blind) Interactive mode keyed on stdin only; `> out.txt` writes ANSI to the file — carried: rarely met; switching to batch would read batch input from the keyboard, and the plan settles stdin-based dispatch.
+  - `[false]` `[reject]` (blind) Typing batch input at a terminal no longer works and nothing says so — the intent explicitly makes a terminal stdin start the live map, and the README documents piping for batch mode.
+  - `[medium]` `[defer]` (blind) AGENTS.md not updated for `interactive.py`, `trace()` and interactive exit behavior — real; agents will get a wrong picture. Its fix edits an agent-context file, so it is deferred.
+  - `[low]` `[reject]` (blind) Messages wider than the terminal (`HELP` is 87 chars) wrap and, at the maximum grid size, scroll the top map row; size checked only once — scrolling only happens when the grid fills the terminal height exactly; fixing it means clipping or measuring every message and re-checking on each draw.
+  - `[low]` `[patch]` (blind) `keyword.isdigit()` accepts `²`, so `int()` leaks Python's "invalid literal" message — now `isdecimal()`, so `²` falls through to the "Unknown input" error; a parametrized case was added.
+  - `[low]` `[patch]` (blind) Keywords ignore case but heading and commands must be uppercase — `_add` uppercases the heading and commands, `_command` the commands; user-typed coordinates are still echoed verbatim in errors. `test_lowercase_heading_and_commands_are_accepted` added.
+  - `[false]` `[reject]` (blind) The animating rover is hidden under a higher-numbered rover — the intent mandates that the later-numbered rover is drawn on top.
+  - `[low]` `[reject]` (blind) No limit on animation length or way to skip it; typing during an animation echoes over the map — the intent mandates a per-step delay; suppressing echo needs termios handling, which is out of proportion to the harm.
+  - `[low]` `[reject]` (blind) `read_line` writes to `sys.stdout`, not the injected `out` — `main()` is the only real caller and uses the defaults, where both are stdout; parameterizing it adds surface for no current caller.
+  - `[medium]` `[patch]` (blind) `main()` TTY branch untested — same group as the verification-gap `main()` finding.
+  - `[medium]` `[patch]` (blind) `read_line` untested — same group as the verification-gap `read_line` finding.
+  - `[false]` `[reject]` (blind) A bare `1` "animates" one frame though `COMMANDS` is shown as required — it redraws once and reports the rover's current position, which is a correct status report; nothing goes wrong.
+  - `[low]` `[reject]` (blind) Full `\x1b[2J` clear on every frame may flicker — cosmetic; switching to home + clear-to-end needs per-line erasing and reworks the screen assertions.
+  - `[false]` `[reject]` (blind) Legacy Windows consoles print raw ANSI — the intent targets "any ANSI terminal"; non-ANSI consoles are outside it.
+  - `[false]` `[reject]` (blind) Frozen `Outcome` holds a mutable list — no caller mutates it, and there is no named harm.
+  - `[medium]` `[patch]` (verification-gap) `main()` terminal branch (alt screen on/off, `finally`, early return) never run by a test — added two `tests/test_cli.py` tests using a TTY-pretending stdin whose `read()` fails the test and a patched `interactive.run_interactive`; they assert the exact `ALT_SCREEN_ON + ALT_SCREEN_OFF` output, the normal return, and the restore on failure.
+  - `[medium]` `[patch]` (verification-gap) `read_line` has no test, including its EOF signal — added tests for prompt write plus CRLF strip, `EOFError` on empty stdin, and `run_interactive` with the default `input_fn` ending on real EOF.
+  - `[low]` `[patch]` (verification-gap) Stale `# input() echoes its prompt to stdout` comment in the test helper — reworded to name `read_line`.
+  - `[low]` `[reject]` (verification-gap) stdin-only TTY check with stdout redirected — carried (same as the blind row above).
+  - `[low]` `[reject]` (edge-case) Invalid UTF-8 at the in-session prompt raises `UnicodeDecodeError` outside `handle`'s guard and crashes — real but only from pasting non-UTF-8 bytes into a UTF-8 terminal; the fix adds another guard around input.
+  - `[low]` `[reject]` (edge-case) Message wider than the terminal wraps and scrolls the map — same root cause and reason as the blind message-wrap row.
+  - `[low]` `[reject]` (edge-case) Resizing the terminal smaller mid-session scrolls the map — same reason; re-checking on every draw is new complexity for a rare action.
+  - `[medium]` `[patch]` (edge-case) `quit`/`exit` at the grid prompt reports "Malformed grid line" and re-prompts — the intent lists `quit`/`exit` as exits; the grid loop now returns on them (case and whitespace insensitive). `test_quit_and_exit_end_session_at_grid_prompt` added; the pty smoke run exits 0.
+  - `[low]` `[reject]` (edge-case) stdin-only TTY check — carried (same as the blind row above).
+  - `[low]` `[patch]` (edge-case) Non-ASCII digit keyword leaks the `int()` message — same group as the blind `isdigit` row; fixed with `isdecimal()`.
+  - `[low]` `[reject]` (edge-case, claim) "Map stays in place" doesn't hold with wrapped messages or a resize — same group as message wrap; rejected for the same reason.
+  - `[low]` `[reject]` (edge-case, claim) "Bad input never exits" is broken by invalid-encoding input — same group as the `UnicodeDecodeError` row; rejected for the same reason.
+
 ## Design Notes
 
 Screen layout after `add 1 2 N` on a `3 2` grid (y labels left, x labels below, last digit only):
@@ -132,3 +177,20 @@ Redrawing the full frame from the home position rather than moving the cursor pe
 **Verification:** `uv run pytest -q` -- 93 passed. Piped classic sample prints `1 3 N` / `5 1 E`. Implementer drove the pre-patch build through a pseudo-terminal end to end (exit 0).
 
 **Residual risks:** Long messages wider than the terminal can wrap onto an extra line; shrinking the terminal mid-session can scroll the map; commands and headings are uppercase-only.
+
+### 2026-10-29 — Follow-up review pass (thorough)
+
+**Summary:** Thorough follow-up review (blind, edge-case, verification-gap, intent-alignment) of the interactive live map. Six patch groups applied: tests for the terminal branch of `main()` and for `read_line`; `quit`/`exit` honored at the grid prompt; `isdecimal()` for rover numbers; case-insensitive headings and commands; stale test comment.
+
+**Files changed (this pass):**
+- `src/bmad_train_1/interactive.py` -- `quit`/`exit` at grid prompt; `isdecimal()`; uppercase heading/commands.
+- `tests/test_cli.py` -- terminal-branch tests (alt-screen wrap, restore on failure, normal return).
+- `tests/test_interactive.py` -- `read_line` tests, real-EOF session test, grid-prompt quit, lowercase input, `²` keyword; comment fix.
+
+**Review findings:** 34 findings (high 0, medium 9, low 16, false 9). Patched entries: 4 medium (main TTY branch, read_line, grid-prompt quit; intent-alignment rows grouped in), 3 low (isdecimal, case, comment). Deferred: AGENTS.md out of date (medium). Rejected, with reasons in the triage log: stdout-redirect dispatch (carried), message wrap/resize scrolling, animation skip/echo, read_line stream split, flicker, UnicodeDecodeError, and all `false` rows.
+
+**Follow-up review recommended:** false -- follow-up pass with no `high` patched; patched counts: high 0, medium 4, low 3.
+
+**Verification:** `uv run pytest -q` -- 102 passed. Piped classic sample prints `1 3 N` / `5 1 E`. Pty-driven run: `quit` at the grid prompt exits 0; `3 3`, `add 1 1 n rm`, `quit` shows `Rover1 is now at position 2,1 orienting E` and exits 0.
+
+**Residual risks:** Long messages and terminal shrinking can still scroll the map at the maximum grid size; invalid UTF-8 input at the session prompt crashes; AGENTS.md is stale until the deferred item is addressed.

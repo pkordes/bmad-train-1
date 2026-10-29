@@ -9,6 +9,7 @@ from bmad_train_1.interactive import (
     GRID_PROMPT,
     PROMPT,
     Session,
+    read_line,
     render_map,
     run_interactive,
 )
@@ -46,7 +47,7 @@ def run(
 ) -> str:
     out = io.StringIO()
     def prompted(prompt: str) -> str:
-        out.write(prompt)  # input() echoes its prompt to stdout
+        out.write(prompt)  # read_line writes its prompt to stdout
         return input_fn()
 
     run_interactive(prompted, out, delay, sleep, lambda: size)
@@ -180,6 +181,7 @@ def test_start_outside_grid_does_not_advance_numbering() -> None:
         ("add 1 2 Q", "error: Invalid heading 'Q': expected one of N, E, S, W"),
         ("add a 2 N", "error: Malformed rover line 'a 2 N': expected integers"),
         ("fly", "error: Unknown input 'fly'; type 'help' for commands"),
+        ("\u00b2 M", "error: Unknown input '\u00b2 M'; type 'help' for commands"),
     ],
 )
 def test_bad_input_reports_error(line: str, message: str) -> None:
@@ -193,6 +195,12 @@ def test_any_whitespace_separates_tokens() -> None:
     assert session.handle("add\t1  2\tN").message.startswith("Rover1 added")
     assert session.handle("1\tM").message == "Rover1 is now at position 1,3 orienting N"
     assert session.handle("1 M M").message == "error: Usage: <n> COMMANDS"
+
+
+def test_lowercase_heading_and_commands_are_accepted() -> None:
+    session = Session(GRID)
+    assert session.handle("add 1 2 n").message == "Rover1 added at position 1,2 orienting N"
+    assert session.handle("1 rm").message == "Rover1 is now at position 2,2 orienting E"
 
 
 @pytest.mark.parametrize("line", ["quit", "exit", " EXIT "])
@@ -260,6 +268,13 @@ def test_quit_and_exit_end_session_at_prompt(word: str) -> None:
     assert screens[-1].endswith("\n" + PROMPT)
 
 
+@pytest.mark.parametrize("word", ["quit", " EXIT "])
+def test_quit_and_exit_end_session_at_grid_prompt(word: str) -> None:
+    screens, _ = play(word, "5 5")
+    assert len(screens) == 1
+    assert screens[0].endswith(GRID_PROMPT)
+
+
 @pytest.mark.parametrize("lines", [("5 5",), ()])
 def test_eof_ends_session_with_newline(lines: tuple[str, ...]) -> None:
     prompt = PROMPT if lines else GRID_PROMPT
@@ -300,3 +315,29 @@ def test_tiny_terminal_fits_no_grid() -> None:
     assert screens[1].startswith(
         "error: Grid 0 0 does not fit this 2x3 terminal: enlarge the terminal"
     )
+
+
+# read_line
+
+
+def test_read_line_writes_prompt_and_strips_line_ending(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    monkeypatch.setattr("sys.stdin", io.StringIO("5 5\r\n"))
+    assert read_line(PROMPT) == "5 5"
+    assert capsys.readouterr().out == PROMPT
+
+
+def test_read_line_raises_eof_at_end_of_input(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr("sys.stdin", io.StringIO(""))
+    with pytest.raises(EOFError):
+        read_line(PROMPT)
+
+
+def test_session_ends_on_real_eof(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("sys.stdin", io.StringIO("5 5\n"))
+    out = io.StringIO()
+    run_interactive(out=out, sleep=lambda _: None, terminal_size=terminal)
+    assert out.getvalue().endswith("\n")
