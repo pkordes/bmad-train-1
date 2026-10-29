@@ -77,6 +77,36 @@ Run the test suite:
 uv run pytest -q
 ```
 
+### Interactive mode
+
+Run the console script in a terminal, with nothing piped to stdin, and it
+starts a live map instead of reading the batch format:
+
+```bash
+uv run bmad-train-1
+```
+
+It first asks for the grid size (`W H`, for example `5 5`). It then draws the
+map at the top of a cleared screen and redraws it in place after every input.
+North is up: rows run from `H` at the top down to `0`, and columns run from `0`
+to `W` left to right. Axis labels show the last digit only.
+
+| Input | Effect |
+|-------|--------|
+| `add x y H [COMMANDS]` | Adds the next numbered rover (Rover1, Rover2, ...), then runs its optional commands |
+| `<n> COMMANDS` | Sends `L`/`R`/`M` commands to Rover`n`, for example `1 MMRM` |
+| `help` | Shows the command summary |
+| `quit` or `exit` | Ends the session (EOF and Ctrl-C also work), with exit status 0 |
+
+Each command step is animated with a 0.3 s delay. When a rover finishes, the
+message line reads `RoverX is now at position x,y orienting H`. Rovers are drawn
+as `^` (N), `>` (E), `v` (S) or `<` (W), and empty cells as `.`. Several rovers
+may share a cell; the higher-numbered one is drawn on top.
+
+The whole command string is checked before anything moves, so a bad string
+(or an unknown rover, or a start outside the grid) shows an error and changes
+nothing. Bad input never ends the session.
+
 ## BMAD Update
 
 This project runs the **BMAD v7 preview alpha** (BMAD-METHOD `main`) with
