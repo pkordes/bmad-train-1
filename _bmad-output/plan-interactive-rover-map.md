@@ -15,14 +15,7 @@ review_loop_iteration: 0
 followup_review_recommended: false
 context: []
 warnings: []
-deferred:
-  - summary: >-
-      AGENTS.md still describes three layers and a main() that always exits 1 on errors; it omits interactive.py, trace() and TTY dispatch.
-    evidence: |-
-      AGENTS.md "Architecture" lists rover.py, parser.py and __init__.py only, and says main() prints errors to stderr and exits 1, which now holds only in batch mode. The fix edits an agent-context file, so it is deferred rather than patched.
-    location: >-
-      AGENTS.md
-    severity: medium
+deferred: []
 ---
 
 <intent-contract>
